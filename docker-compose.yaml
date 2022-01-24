@@ -1,0 +1,47 @@
+version: "3.9"
+services:
+  mysql5.7:
+    image: mysql:5.7.31
+    restart: always
+    container_name: mysql5.7
+    ports:
+      - 3306:3306
+    volumes: 
+       - ./mysql/conf:/etc/mysql/conf.d
+       - ./mysql/data/:/var/lib/mysql
+       - ./nacos/nacos-mysql.sql:/docker-entrypoint-initdb.d/nacos-mysql.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+    command:
+      --max_connections=1000
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --default-authentication-plugin=mysql_native_password
+      --lower_case_table_names=1
+    networks:
+      - safety-net
+
+  nacos:
+    image: nacos/nacos-server:v2.0.4
+    container_name: nacos
+    volumes:
+      - ./nacos/logs/:/home/nacos/logs
+      - ./nacos/init.d/custom.properties:/home/nacos/init.d/custom.properties
+    env_file:
+      - ./nacos/nacos-standlone-mysql.env
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9555:9555"
+    depends_on:
+      - mysql5.7
+    restart: always
+    networks:
+      - safety-net
+
+networks:
+  safety-net:
+    driver: bridge
+
+
+
